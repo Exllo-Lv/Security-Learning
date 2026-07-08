@@ -1,0 +1,9 @@
+@echo off
+echo 正在添加变更...
+git add .
+echo 正在提交...
+git commit -m "自动更新漏洞情报简报 %date%"
+echo 正在推送到GitHub...
+git push
+echo 完成！
+pause
