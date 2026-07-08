@@ -1,0 +1,14 @@
+# 忽略 Git 提交脚本
+auto_push.bat
+commit.bat
+
+# 忽略系统临时文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 忽略 IDE 或编辑器配置文件
+.vscode/
+.idea/
+*.swp
+*.swo
