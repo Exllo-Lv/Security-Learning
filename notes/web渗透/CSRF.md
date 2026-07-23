@@ -41,7 +41,7 @@ CSRF是攻击者通过伪造用户浏览器的请求,欺骗浏览器去访问一
 
 ![image-20260716143351917](https://exllo-lv-github-notes-picture-1452130078.cos.ap-nanjing.myqcloud.com/img/image-20260716143351917.png)
 
-![image-20260716144514650](C:\Users\18567\AppData\Roaming\Typora\typora-user-images\image-20260716144514650.png)
+![image-20260716144514650](https://exllo-lv-github-notes-picture-1452130078.cos.ap-nanjing.myqcloud.com/img/image-20260716144514650.png)
 
 这里复制到登陆过的浏览器后直接成功了
 
@@ -95,3 +95,32 @@ http://127.0.0.1/discuz_x1.5_sc_utf8/upload/uc_server/admin.php?m=db&a=operate&t
    - 前端读取整个Cookie
    - 发起非GET请求时会将读的Cookie放入自定义请求头中
    - 服务器收到请求后会提取cookie和请求头中的自定义请求头对比
+
+
+
+
+
+## CSRF绕过
+
+### 针对WAF规则
+
+这类技术核心是混淆攻击载荷，让WAF的规则匹配失效，但目标服务器或浏览器依然能正常解析。
+
+- **编码与特殊字符混淆**：
+  - 利用多种编码（如URL编码、Unicode编码）或插入换行符(`\n`)、制表符(`\t`)等，把关键字符“藏”起来。例如，用`%0A`（换行符）替换空格，或用大写`HREF`绕过只检测小写的WAF。一个真实案例是在`<a`标签的标签名和属性间插入换行符，即`<a\nHREF="/logout">`，成功绕过WAF。
+- **大小写与注释干扰**：
+  - 混合使用大小写来绕过关键词匹配，或在攻击语句中插入无害的注释（如SQL的`--`、HTML的`<!-- -->`），干扰WAF对完整攻击特征的识别。
+- **HTTP参数污染 (HPP)**：
+  - 通过重复提交同一个参数（如 `id=1&id=2`）。WAF和后台程序对这种情况的处理方式可能不同（如WAF取第一个，程序取最后一个），攻击者可以利用这种**解析差异**绕过检测。
+- **协议层面的变异**：
+  - 修改HTTP请求的细节，如改变`GET`/`POST`的大小写（`gEt`），或调整HTTP头的顺序，这些都可能绕过依赖固定格式的WAF规则。
+
+
+
+### 针对特定CSRF防御措施的绕过
+
+当WAF配合应用程序的CSRF防御逻辑时，攻击目标会更明确。
+
+- **绕过基于`Referer`的防御**：如果应用只检查`Referer`头存在性，攻击者可通过`<meta name="referrer" content="never">`让浏览器不发送该头。若应用只检查`Referer`是否包含其域名，攻击者可把合法域名作为子域名或参数放入自己的恶意链接中。
+- **绕过基于`Content-Type`的防御**：利用WAF和应用对`Content-Type`解析的不一致。例如，WAF不检测`application/json`，但应用又能解析，攻击者便可发送JSON格式的恶意载荷。另一个例子是使用大小写变体`Application/x-www-form-urlencoded`，或直接**不发送`Content-Type`头**，都可能绕过检查。
+- **直接攻击CSRF Token机制**：最简单的思路是**直接删除Token参数或其值**；或尝试**用其他随机值替换**，看服务器是否只做简单的存在性检查。如果Token可预测或有效期很长，攻击者也可能通过**提前获取一个合法Token**来构造请求。
