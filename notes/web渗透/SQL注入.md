@@ -147,7 +147,7 @@ SQL注入指的是Web对用户输入的合法性未进行判断,处理.前端传
 2. 判断类型.字符型闭合引号,数字型不用  ' or '1'='1 或 or 1=1
 3. order by 判断列数,递增N直到报错
 4. union select 定位回显位置 id=0 union select 1,2,3,4 看会显示那些数字
-5. 开始查询 union select 1,group_concat (schema_name),3,4 from infomation_schema.schemata 一点一点拖
+5. 开始查询 `union select 1,group_concat (schema_name),3,4 from infomation_schema.schemata` 一点一点拖
 
 **必须依赖information_schema**;需要列数匹配回显位有限
 

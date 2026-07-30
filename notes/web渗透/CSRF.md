@@ -77,30 +77,34 @@ http://127.0.0.1/discuz_x1.5_sc_utf8/upload/uc_server/admin.php?m=db&a=operate&t
 
 ![image-20260716165922009](https://exllo-lv-github-notes-picture-1452130078.cos.ap-nanjing.myqcloud.com/img/image-20260716165922009.png)
 
-## 防御措施
+## 防御措施**
 
-1. 对关键操作增加**token**参数,token值必须随机
+1. **对关键操作增加token参数,token值必须随机**
    - 嵌入表单隐藏字段,或者自定义HTTP请求头
-2. 对**Referer**进行验证
+2. **对Referer进行验证**
 3. 关于安全的会话管理(避免会话被利用)
    - 不要在客户端保存敏感信息,比如身份认证信息
    - 测试直接关闭,退出时会话过期机制
    - 设置会话过期机制,比如15分钟内无操作,则登录自动超时
-4. 访问控制安全管理
+4. **访问控制安全管理**
    - 敏感信息的修改时需要对身份进行二次认证,
    - 使用post
    - 通过http头部的referer来限制原页面,增加验证码,一般用在登录,也可以用在其他重要信息
-5. 双重提交Cookie
+5. **双重提交Cookie**
    - 先服务器下发(set-cookie)
    - 前端读取整个Cookie
    - 发起非GET请求时会将读的Cookie放入自定义请求头中
    - 服务器收到请求后会提取cookie和请求头中的自定义请求头对比
+6. **使用成熟的CSRF Token方案**：采用框架内置方案，确保Token不可预测、与用户会话绑定且服务端严格验证。
+7. **采用多重验证**：结合使用CSRF Token、`SameSite` Cookie属性和对`Referer`/`Origin`头的严格验证。
+8. **强化WAF配置**：保持规则更新，开启严格模式，对请求进行标准化解码后再匹配。
+9. **遵循安全编码规范**：所有状态改变操作必须用POST等非GET方法；对输入输出进行严格过滤，防御XSS。
 
 
 
 
 
-## CSRF绕过
+## CSRF绕过**
 
 ### 针对WAF规则
 
@@ -124,3 +128,12 @@ http://127.0.0.1/discuz_x1.5_sc_utf8/upload/uc_server/admin.php?m=db&a=operate&t
 - **绕过基于`Referer`的防御**：如果应用只检查`Referer`头存在性，攻击者可通过`<meta name="referrer" content="never">`让浏览器不发送该头。若应用只检查`Referer`是否包含其域名，攻击者可把合法域名作为子域名或参数放入自己的恶意链接中。
 - **绕过基于`Content-Type`的防御**：利用WAF和应用对`Content-Type`解析的不一致。例如，WAF不检测`application/json`，但应用又能解析，攻击者便可发送JSON格式的恶意载荷。另一个例子是使用大小写变体`Application/x-www-form-urlencoded`，或直接**不发送`Content-Type`头**，都可能绕过检查。
 - **直接攻击CSRF Token机制**：最简单的思路是**直接删除Token参数或其值**；或尝试**用其他随机值替换**，看服务器是否只做简单的存在性检查。如果Token可预测或有效期很长，攻击者也可能通过**提前获取一个合法Token**来构造请求。
+
+
+
+### 其他绕过
+
+- **利用同源策略的细微差别**：某些框架的CSRF防御依赖`Origin`头，但其检查逻辑可能存在漏洞，例如只检查`Origin`是否**包含**而不是**等于**合法域名。
+- **HTTP方法覆盖**：某些应用通过`_method`参数覆盖实际HTTP方法（如用`POST`发`DELETE`请求）。如果WAF只防护`POST`，攻击者就可能利用此特性绕过。
+- **组合其他漏洞**：如果目标站点存在**XSS漏洞**，攻击者可直接用JavaScript**读取页面中的CSRF Token**，然后发起携带合法Token的请求，彻底瓦解防御
+
